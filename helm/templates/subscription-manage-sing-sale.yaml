@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: subscription-manage-single-sale
+spec:
+  concurrencyPolicy: Forbid
+  schedule: "5 0 * * *"
+  suspend: true
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        spec:
+          terminationGracePeriodSeconds: 0
+          restartPolicy: Never
+          containers:
+            - name: cronjob
+              imagePullPolicy: IfNotPresent
+              image: {{ .Values.image.name }}
+              command:
+                - php
+                - artisan
+                - subscription:manage
+                - single
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.labels.app }}

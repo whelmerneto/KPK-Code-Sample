@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.cronjob.invites.expire.name }}
+spec:
+  concurrencyPolicy: Forbid
+  schedule: "0 0 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        spec:
+          terminationGracePeriodSeconds: 0
+          restartPolicy: Never
+          containers:
+            - name: cronjob
+              imagePullPolicy: IfNotPresent
+              image: {{ .Values.image.name }}
+              command:
+                - php
+                - artisan
+                - invites:expire-command
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.labels.app }}

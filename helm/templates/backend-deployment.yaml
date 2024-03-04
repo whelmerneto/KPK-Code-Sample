@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  labels:
+    app: {{ .Values.labels.app | default "backend-app"}}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.labels.app | default "backend-app"}}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.labels.app | default "backend-app"}}
+    spec:
+      containers:
+      - name: {{ .Values.labels.app | default "backend-app"}}
+        image: {{ .Values.image.name }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.labels.app }}
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: {{ .Values.ingress.host }}
+          initialDelaySeconds: 45
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: {{ .Values.ingress.host }}
+          initialDelaySeconds: 45
+          periodSeconds: 30
+          successThreshold: 3
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory }}
+            cpu: {{ .Values.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.resources.limits.memory }}
+            cpu: {{ .Values.resources.limits.cpu }}

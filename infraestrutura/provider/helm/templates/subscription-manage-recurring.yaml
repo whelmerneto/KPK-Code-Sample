@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: subscription-manage-recurring
+spec:
+  concurrencyPolicy: Forbid
+  schedule: "5 0 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        spec:
+          terminationGracePeriodSeconds: 0
+          restartPolicy: Never
+          containers:
+            - name: cronjob
+              imagePullPolicy: IfNotPresent
+              image: {{ .Values.image.name }}
+              command:
+                - php
+                - artisan
+                - subscription:manage
+                - recurring
+              env:
+              {{- range $k, $v := .Values.Secret }}
+                - name: {{ $k }}
+                  valueFrom:
+                    secretKeyRef:
+                      key: {{ $k }}
+                      name: "backend-app"
+              {{- end }}
